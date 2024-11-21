@@ -1,0 +1,9 @@
+services:
+  pineu.api:
+    image: ${DOCKER_REGISTRY-}pineuapi
+    build:
+      context: .
+      dockerfile: Pineu.API/Dockerfile
+
+  pineu.db:
+    image: mariadb  

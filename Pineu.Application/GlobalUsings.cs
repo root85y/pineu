@@ -1,0 +1,13 @@
+﻿global using Ardalis.Specification;
+global using FluentValidation;
+global using MediatR;
+global using Pineu.Application.Abstractions.Messaging;
+global using Pineu.Domain.Entities.MainDomain;
+global using Pineu.Application.SystemFiles.Queries;
+global using Pineu.Domain.Errors;
+global using Pineu.Domain.Repositories.DbBackups;
+global using Pineu.Domain.Repositories.MainDomain;
+global using Pineu.Domain.Shared;
+global using Shared;
+global using Shared.Constants.Enums.MainDomain;
+global using System.IO.Compression;

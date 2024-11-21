@@ -1,0 +1,9 @@
+﻿global using Ardalis.Specification;
+global using Pineu.Domain.Entities.MainDomain;
+global using Pineu.Domain.Entities.Primitives;
+global using Pineu.Domain.Entities.SystemFiles;
+global using Pineu.Domain.Shared;
+global using Shared;
+global using Shared.Constants;
+global using Shared.Constants.Enums;
+global using Shared.Constants.Enums.MainDomain;

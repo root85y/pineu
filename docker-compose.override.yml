@@ -1,0 +1,56 @@
+services:
+  pineu.api:
+    container_name: pineu.api
+    restart: always
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_HTTPS_PORTS=8081
+      - TZ=Asia/Tehran
+      - SmsPanelApiKey=gkd2ccoBtmqgddIVTmgnuR1OzoyNZHB9KAF0c4CBNB74Is40wqav0pIPQdRadsje
+      - SmsPanelTemplateIdSendCode=815076
+      - SmsPanelTemplateIdSendLink=595819
+    ports:
+      - "8080:8080"
+      - "8081"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+    depends_on:
+      pineu.db:
+        condition: service_healthy
+
+  pineu.db:
+    image: mariadb
+    container_name: pineu.db
+    environment:
+        MYSQL_ROOT_PASSWORD: "89309df4-7a2d-45a9-800e-d697572db520"
+        MYSQL_PASSWORD: "89309df4-7a2d-45a9-800e-d697572db520"
+        TZ: Asia/Tehran
+    restart: always
+    ports:
+        - "3306:3306"
+    healthcheck:
+        test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+        interval: 10s
+        timeout: 10s
+        retries: 3
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  pineu.redis:
+    image: redis
+    container_name: pineu.redis
+    restart: always
+    environment:
+        TZ: Asia/Tehran
+    ports:
+      - '6379:6379'
+    healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 5s
+        timeout: 3s
+        retries: 3
+
+volumes:
+  mariadb_data: 
