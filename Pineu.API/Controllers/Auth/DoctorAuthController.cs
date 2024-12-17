@@ -152,6 +152,14 @@ namespace Pineu.API.Controllers.Auth {
                 Message = "User not active"
             });
 
+            var passwordValid = await userManager.CheckPasswordAsync(user.Password, request.Password);
+            if (!passwordValid) {
+                return BadRequest(new {
+                    Message = "Invalid password"
+                });
+            }
+
+
             Log.Logger.Information("Doctor {username} Logged in", user.UserName);
 
             return Accepted(new {
