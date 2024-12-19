@@ -16,7 +16,6 @@ namespace Pineu.API.Controllers.MainDomain {
         public async Task<IActionResult> PatientRegistration([FromBody] PatientRegistrationRequest request, CancellationToken cancellationToken) {
             var user = await userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == request.PhoneNumber, cancellationToken: cancellationToken);
 
-
             if (user == null) {
 
                 await sender.Send(new UpsertProfileCommand(request.FullName, null, null, null, null, request.PhoneNumber, null, "waiting", Guid.NewGuid()), cancellationToken);
@@ -34,17 +33,33 @@ namespace Pineu.API.Controllers.MainDomain {
                 });
             }
             else {
-                var (IsSuccess, Meessage, code) = await SendSms(request.PhoneNumber, true);
-                if (!IsSuccess)
-                    return NotFound(new {
-                        Message = Meessage
-                    });
+                
+                var userId = HttpContext.User.Identity.Name;
+                var query1 = new GetLestOfRegPatientQuery(Guid.Parse(userId), "Completed");
+                var res1 = await Sender.Send(query, cancellationToken);
+                var query2 = new GetLestOfRegPatientQuery(Guid.Parse(userId), "waiting");
+                var res2 = await Sender.Send(query, cancellationToken);
+                if (res1.IsFailure) return HandleFailure(res1);
+                if (res2.IsFailure) return HandleFailure(res2);
+                if ((res1.Value == null || !res1.Value.Any()) && 
+                (res2.Value == null || !res2.Value.Any())) {
+                    var (IsSuccess, Meessage, code) = await SendSms(request.PhoneNumber, true);
+                    if (!IsSuccess)
+                        return NotFound(new {
+                            Message = Meessage
+                        });
 
-                return Accepted(new {
-                    Message = Meessage,
-                    Code = code,
-                    request.PhoneNumber,
-                });
+                    return Accepted(new {
+                        Message = Meessage,
+                        Code = code,
+                        request.PhoneNumber,
+                    });
+                }
+                else{
+                        return BadRequest(new {
+                            Message = "This patient is already in your list"
+                        });
+                }
             }
         }
 
