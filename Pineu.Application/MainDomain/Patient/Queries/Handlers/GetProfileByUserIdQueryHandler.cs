@@ -11,7 +11,9 @@ namespace Pineu.Application.MainDomain.Profiles.Queries.Handlers {
             var res = profiles.List.Select(prof => new GetLestOfRegPatientResponse
                     (prof.FullName,
                     prof.Mobile,
-                    prof.CreatedAt)
+                    prof.Birthdate,
+                    prof.CreatedAt
+                    )
                 );
             return new PagedResponse<IEnumerable<GetLestOfRegPatientResponse>>(res, profiles.Count);
 

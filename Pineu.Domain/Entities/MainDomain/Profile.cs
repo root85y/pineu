@@ -28,7 +28,7 @@ public class Profile : Entity<Guid>
     public static Profile Create(Guid id, string? fullName, Gender? gender, DateTime? birthdate, MaritalStatus? maritalStatus, string Mobile, Guid? doctorId, string status, Guid userId) =>
         new(id, fullName, gender, birthdate, maritalStatus, Mobile,doctorId, status, userId);
 
-    public void Update(string? fullName, Gender? gender, DateTime? birthdate, MaritalStatus? maritalStatus, Guid? doctorId, string status)
+    public void Update(string? fullName, Gender? gender, DateTime? birthdate, MaritalStatus? maritalStatus, Guid? doctorId, string? status)
     {
         FullName = fullName;
         Gender = gender;
