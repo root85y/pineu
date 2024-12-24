@@ -31,18 +31,18 @@ namespace Pineu.API.Controllers.MainDomain {
                     Code = code,
                     request.PhoneNumber
                 });
-            }
-            else {
-                
+            } else {
+
                 var userId = HttpContext.User.Identity.Name;
                 var query1 = new GetLestOfRegPatientQuery(Guid.Parse(userId), "Completed");
-                var res1 = await Sender.Send(query, cancellationToken);
+                var res1 = await Sender.Send(query1, cancellationToken);
                 var query2 = new GetLestOfRegPatientQuery(Guid.Parse(userId), "waiting");
-                var res2 = await Sender.Send(query, cancellationToken);
-                if (res1.IsFailure) return HandleFailure(res1);
-                if (res2.IsFailure) return HandleFailure(res2);
-                if ((res1.Value == null || !res1.Value.Any()) && 
-                (res2.Value == null || !res2.Value.Any())) {
+                var res2 = await Sender.Send(query2, cancellationToken);
+                if (res1.IsFailure)
+                    return HandleFailure(res1);
+                if (res2.IsFailure)
+                    return HandleFailure(res2);
+                if ((res1.Value == null) && (res2.Value == null)) {
                     var (IsSuccess, Meessage, code) = await SendSms(request.PhoneNumber, true);
                     if (!IsSuccess)
                         return NotFound(new {
@@ -54,29 +54,31 @@ namespace Pineu.API.Controllers.MainDomain {
                         Code = code,
                         request.PhoneNumber,
                     });
-                }
-                else{
-                        return BadRequest(new {
-                            Message = "This patient is already in your list"
-                        });
+                } else {
+                    return BadRequest(new {
+                        Message = "This patient is already in your list"
+                    });
                 }
             }
         }
 
         [HttpPost, Authorize, Route("PatientRegistrationValidateCode")]
         public async Task<IActionResult> PatientRegistrationValidateCode([FromBody] ValidateCodeRequest request, CancellationToken cancellationToken) {
-            if (!request.PhoneNumber.StartsWith("09") || request.PhoneNumber.Length != 11) return BadRequest(new {
-                Message = "الگو شمارۀ موبایل وارد شده اشتباه است"
-            });
+            if (!request.PhoneNumber.StartsWith("09") || request.PhoneNumber.Length != 11)
+                return BadRequest(new {
+                    Message = "الگو شمارۀ موبایل وارد شده اشتباه است"
+                });
 
             var code = await smsPool.GetCode(request.PhoneNumber);
             var date = await smsPool.GetDate(request.PhoneNumber);
-            if (code != request.Code) return BadRequest(new {
-                Message = "کد اشتباه است"
-            });
-            if (date.HasValue && date.Value.AddMinutes(2) < DateTime.Now) return BadRequest(new {
-                Message = "کد منقضی شده است"
-            });
+            if (code != request.Code)
+                return BadRequest(new {
+                    Message = "کد اشتباه است"
+                });
+            if (date.HasValue && date.Value.AddMinutes(2) < DateTime.Now)
+                return BadRequest(new {
+                    Message = "کد منقضی شده است"
+                });
 
             await smsPool.RemoveCode(request.PhoneNumber);
             await smsPool.RemoveDate(request.PhoneNumber);
@@ -98,7 +100,8 @@ namespace Pineu.API.Controllers.MainDomain {
 
             var query = new GetLestOfRegPatientQuery(Guid.Parse(userId), "Completed");
             var res = await Sender.Send(query, cancellationToken);
-            if (res.IsFailure) return HandleFailure(res);
+            if (res.IsFailure)
+                return HandleFailure(res);
 
             return SuccessResponse(res.Value);
         }
@@ -109,7 +112,8 @@ namespace Pineu.API.Controllers.MainDomain {
 
             var query = new GetLestOfRegPatientQuery(Guid.Parse(userId), "waiting");
             var res = await Sender.Send(query, cancellationToken);
-            if (res.IsFailure) return HandleFailure(res);
+            if (res.IsFailure)
+                return HandleFailure(res);
 
             return SuccessResponse(res.Value);
         }
@@ -124,7 +128,8 @@ namespace Pineu.API.Controllers.MainDomain {
 
             var query = new GetAllPatientDataQuery(patinetId.Id, Guid.Parse(doctordata));
             var res = await Sender.Send(query, cancellationToken);
-            if (res.IsFailure) return HandleFailure(res);
+            if (res.IsFailure)
+                return HandleFailure(res);
 
             var (Message, resSleepStatuse) = await GetSleepStatusesAsync(From, To, patinetId.Id, cancellationToken);
             if (resSleepStatuse == null)
@@ -200,8 +205,10 @@ namespace Pineu.API.Controllers.MainDomain {
             var previousCode = await smsPool.GetCode(PhoneNumber);
             var previousDate = await smsPool.GetDate(PhoneNumber);
 
-            if (previousCode.HasValue) await smsPool.RemoveCode(PhoneNumber);
-            if (previousDate.HasValue) await smsPool.RemoveDate(PhoneNumber);
+            if (previousCode.HasValue)
+                await smsPool.RemoveCode(PhoneNumber);
+            if (previousDate.HasValue)
+                await smsPool.RemoveDate(PhoneNumber);
 
             Random random = new();
             int code = random.Next(100000, 999999);

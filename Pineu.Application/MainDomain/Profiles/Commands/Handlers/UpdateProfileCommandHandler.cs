@@ -12,7 +12,7 @@ internal class UpdateProfileCommandHandler(IProfileRepository profileRepository,
 
         var profile = await profileRepository.GetAsync(request.UserId, cancellationToken);
         if (profile == null) return Result.Failure(DomainErrors.Profile.ProfileNotFound);
-        profile.Update(profile.FullName, profile.Gender, profile.Birthdate, profile.MaritalStatus, request.Doctor, "Completed");
+        profile.Update(profile.FullName, profile.Gender, profile.Birthdate, profile.MaritalStatus, request.Doctor, null);
         await profileRepository.UpdateAsync(profile, cancellationToken);
         return Result.Success();
     }
