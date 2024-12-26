@@ -9,6 +9,7 @@ using Pineu.Application.MainDomain.Patient.Queries.DTOs;
 using Pineu.Application.MainDomain.MedicalInformations.Queries;
 using Pineu.Persistence.AuthEntities;
 using Pineu.Application.MainDomain.MedicalInformations.Queries.DTOs;
+using System.Globalization;
 
 namespace Pineu.API.Controllers.MainDomain {
     public class PatientController(ISender sender, ISmsPool smsPool, ISmsPanel smsPanel, UserManager<User> userManager) : ApiController(sender) {
@@ -97,13 +98,56 @@ namespace Pineu.API.Controllers.MainDomain {
         [HttpGet, Authorize, Route("PatientsRegistered")]
         public async Task<IActionResult> PatientsRegistered(CancellationToken cancellationToken) {
             var userId = HttpContext.User.Identity.Name;
+            string typeofepilepsy = "";
 
             var query = new GetLestOfRegPatientQuery(Guid.Parse(userId), "Completed");
             var res = await Sender.Send(query, cancellationToken);
             if (res.IsFailure)
                 return HandleFailure(res);
 
-            return SuccessResponse(res.Value);
+            var res2 = res.Value.List.Select(patient => new {
+                patient.patientid,
+                patient.FullName,
+                patient.PhoneNumber,
+                Age = patient.Birthdate.HasValue ? CalculateAge(patient.Birthdate.Value) : (int?)null,
+                patient.Create
+            });
+
+
+            var patientIds = res.Value.List.Select(patient => patient.patientid).ToList();
+
+            foreach (var patientId in patientIds) {
+                var (Message5, resMedicalInformations) = await GetMedicalInformationsAsync(patientId, cancellationToken);
+                if (resMedicalInformations == null)
+                    return BadRequest(new { Error_Message = Message5 });
+
+                switch (resMedicalInformations.EpilepsyTypeId) {
+                    case 1:
+                        typeofepilepsy = "فوکال";
+                        break;
+                    case 2:
+                        typeofepilepsy = "ژنرالیزه";
+
+                        break;
+                    case 3:
+                        typeofepilepsy = "ترکیب فوکال و ژنرالیزه";
+                        break;
+                    case 4:
+                        typeofepilepsy = "ناشناخته";
+                        break;
+                }
+
+                res2.Select(pa => new {
+                    pa.patientid,
+                    pa.FullName,
+                    pa.PhoneNumber,
+                    pa.Age,
+                    EpilepsyType = typeofepilepsy,
+                    pa.Create
+                });
+            }
+
+            return SuccessResponse(res2);
         }
 
         [HttpGet, Authorize, Route("PatientsNotRegistered")]
@@ -138,30 +182,30 @@ namespace Pineu.API.Controllers.MainDomain {
                 });
 
             var (Message2, resNutritionStatus) = await GetNutritionStatusAsync(From, To, patinetId.Id, cancellationToken);
-            if (resSleepStatuse == null)
+            if (resNutritionStatus == null)
                 return BadRequest(new {
                     Error_Message = Message2
                 });
 
             var (Message3, resMentalStatus) = await GetMentalStatusAsync(From, To, patinetId.Id, cancellationToken);
-            if (resSleepStatuse == null)
+            if (resMentalStatus == null)
                 return BadRequest(new {
                     Error_Message = Message3
                 });
 
             var (Message4, resSeizures) = await GetSeizuresAsync(From, To, patinetId.Id, cancellationToken);
-            if (resSleepStatuse == null)
+            if (resSeizures == null)
                 return BadRequest(new {
                     Error_Message = Message4
                 });
             var (Message5, resMedicalInformations) = await GetMedicalInformationsAsync(patinetId.Id, cancellationToken);
-            if (resSleepStatuse == null)
+            if (resMedicalInformations == null)
                 return BadRequest(new {
                     Error_Message = Message5
                 });
 
             var (Message6, resWorkoutStatus) = await GetWorkoutStatusAsync(From, To, patinetId.Id, cancellationToken);
-            if (resSleepStatuse == null)
+            if (resWorkoutStatus == null)
                 return BadRequest(new {
                     Error_Message = Message6
                 });
@@ -258,6 +302,7 @@ namespace Pineu.API.Controllers.MainDomain {
             }
             return (null, result.Value);
         }
+
         //GetMentalStatusAsync
         private async Task<(string? Message, PagedResponse<IEnumerable<GetAllMentalStatusesForPatientResponse>>)> GetMentalStatusAsync(
             DateTime? From,
@@ -288,8 +333,8 @@ namespace Pineu.API.Controllers.MainDomain {
 
         //GetMedicalInformationsAsync
         private async Task<(string? Message, GetMedicalInformationResponse)> GetMedicalInformationsAsync(
-        Guid patientId,
-    CancellationToken cancellationToken) {
+            Guid patientId,
+            CancellationToken cancellationToken) {
             var query = new GetMedicalInformationByUserIdQuery(patientId);
             var result = await Sender.Send(query, cancellationToken);
             if (result.IsFailure) {
@@ -297,18 +342,41 @@ namespace Pineu.API.Controllers.MainDomain {
             }
             return (null, result.Value);
         }
+
         //GetWorkoutStatusAsync
         private async Task<(string? Message, PagedResponse<IEnumerable<GetAllWorkoutStatusesForPatientResponse>>)> GetWorkoutStatusAsync(
-    DateTime? From,
-    DateTime? To,
-    Guid patientId,
-    CancellationToken cancellationToken) {
+            DateTime? From,
+            DateTime? To,
+            Guid patientId,
+            CancellationToken cancellationToken) {
             var query = new GetAllWorkoutStatusesForPatientQuery(From, To, patientId);
             var result = await Sender.Send(query, cancellationToken);
             if (result.IsFailure) {
                 return (result.Error.ToString(), null);
             }
             return (null, result.Value);
+        }
+
+        public static int CalculateAge(DateTime birthDate) {
+            bool isPersianDate = birthDate.Year < 1900;
+
+            int birthYear;
+            if (isPersianDate) {
+                PersianCalendar persianCalendar = new PersianCalendar();
+                birthYear = persianCalendar.ToDateTime(birthDate.Year, birthDate.Month, birthDate.Day, 0, 0, 0, 0).Year;
+            } else {
+                birthYear = birthDate.Year;
+            }
+
+            int currentYear = DateTime.Now.Year;
+            int age = currentYear - birthYear;
+
+            DateTime adjustedBirthDate = new DateTime(currentYear, birthDate.Month, birthDate.Day);
+            if (DateTime.Now < adjustedBirthDate) {
+                age--;
+            }
+
+            return age;
         }
         #endregion
     }

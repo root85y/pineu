@@ -6,10 +6,13 @@ namespace Pineu.Application.MainDomain.Profiles.Queries.Handlers {
         : IQueryHandler<GetLestOfRegPatientQuery, PagedResponse<IEnumerable<GetLestOfRegPatientResponse>>> {
         public async Task<Result<PagedResponse<IEnumerable<GetLestOfRegPatientResponse>>>> Handle(GetLestOfRegPatientQuery request, CancellationToken cancellationToken) {
             var profiles = await repository.GetWithDoctorIdAndPatientStatusAsync(request.DoctorID, request.status, cancellationToken);
-            if (profiles == null) return Result.Failure<PagedResponse<IEnumerable<GetLestOfRegPatientResponse>>>(DomainErrors.Profile.ProfileNotFound);
+            if (profiles == null)
+                return Result.Failure<PagedResponse<IEnumerable<GetLestOfRegPatientResponse>>>(DomainErrors.Profile.ProfileNotFound);
 
             var res = profiles.List.Select(prof => new GetLestOfRegPatientResponse
-                    (prof.FullName,
+                    (
+                    prof.UserId,
+                    prof.FullName,
                     prof.Mobile,
                     prof.Birthdate,
                     prof.CreatedAt
