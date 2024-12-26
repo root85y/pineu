@@ -162,7 +162,7 @@ namespace Pineu.API.Controllers.MainDomain {
             return SuccessResponse(res.Value);
         }
 
-        [HttpGet, Route("GetPatientsData")]
+        [HttpGet, Authorize, Route("GetPatientsData")]
         public async Task<IActionResult> GetPatientsData(
             [FromQuery] DateTime? From, DateTime? To, string PhoneNumber, CancellationToken cancellationToken) {
             var doctordata = HttpContext.User.Identity.Name;
@@ -229,6 +229,35 @@ namespace Pineu.API.Controllers.MainDomain {
                 MedicalInformations = resMedicalInformations
             });
         }
+
+        [HttpGet, Authorize, Route("Dashboard")]
+        public async Task<IActionResult> GetPatientsData([FromQuery]
+            DateTime? From,
+            DateTime? To,
+            CancellationToken cancellationToken) {
+            var userId = HttpContext.User.Identity.Name;
+
+            var PatientsNotRegisteredQuery = new GetLestOfRegPatientQuery(Guid.Parse(userId), "waiting");
+            var PatientsNotRegisteredRes = await Sender.Send(PatientsNotRegisteredQuery, cancellationToken);
+
+            var PatientsRegisteredQuery = new GetLestOfRegPatientQuery(Guid.Parse(userId), "Completed");
+            var PatientsRegisteredRes = await Sender.Send(PatientsRegisteredQuery, cancellationToken);
+
+            var (Message, Epilepsy) = await GetEpilepsyAsync(cancellationToken);
+            if (Epilepsy == null)
+                return BadRequest(new {
+                    Error_Message = Message
+                });
+
+            return Ok(new {
+                PatientsNotRegisteredRes,
+                PatientsRegisteredRes,
+                Epilepsy
+            });
+        }
+
+
+
 
         #region bac
         private async Task<(bool IsSuccess, string? Message, int? Code)> SendSms(string PhoneNumber, bool NewUser) {
@@ -336,6 +365,16 @@ namespace Pineu.API.Controllers.MainDomain {
             Guid patientId,
             CancellationToken cancellationToken) {
             var query = new GetMedicalInformationByUserIdQuery(patientId);
+            var result = await Sender.Send(query, cancellationToken);
+            if (result.IsFailure) {
+                return (result.Error.ToString(), null);
+            }
+            return (null, result.Value);
+        }
+
+        //GetEpilepsyAsync
+        private async Task<(string? Message, int[,])> GetEpilepsyAsync(CancellationToken cancellationToken) {
+            var query = new GetEpilepsyQuery();
             var result = await Sender.Send(query, cancellationToken);
             if (result.IsFailure) {
                 return (result.Error.ToString(), null);
