@@ -110,7 +110,7 @@ namespace Pineu.API.Controllers.Auth
             {
                 TimeLength = 120,
                 RemainingTime = 120,
-                //Code = code
+                Code = code
             });
         }
 
@@ -146,6 +146,7 @@ namespace Pineu.API.Controllers.Auth
                 });
 
             var user = await userManager.FindByNameAsync(request.PhoneNumber);
+            var newPassword = Guid.NewGuid().ToString();
             if (user == null)
             {
 
@@ -157,7 +158,7 @@ namespace Pineu.API.Controllers.Auth
                     IsActive = true
                 };
 
-                var newPassword = Guid.NewGuid().ToString()[..8];
+                newPassword = Guid.NewGuid().ToString()[..8];
                 var res = await userManager.CreateAsync(user, newPassword);
                 if (!res.Succeeded)
                     return BadRequest(res.Errors.First().Description);
@@ -167,7 +168,8 @@ namespace Pineu.API.Controllers.Auth
             await smsPool.RemoveDate(request.PhoneNumber);
             return Ok(new
             {
-                Token = await CreateToken(user)
+                Token = await CreateToken(user),
+                passwoed = newPassword
             });
         }
 

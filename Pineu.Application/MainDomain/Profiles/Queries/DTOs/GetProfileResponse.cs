@@ -6,5 +6,6 @@
         DateTime? Birthdate,
         MaritalStatus? MaritalStatus,
         int Score,
+        string status,
         string PhoneNumber);
 }

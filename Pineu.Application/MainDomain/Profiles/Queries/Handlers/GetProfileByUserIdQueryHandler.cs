@@ -7,7 +7,7 @@ namespace Pineu.Application.MainDomain.Profiles.Queries.Handlers {
             var profile = await repository.GetAsync(request.UserId, cancellationToken);
             if (profile == null) return Result.Failure<GetProfileResponse>(DomainErrors.Profile.ProfileNotFound);
 
-            return new GetProfileResponse(profile.UserId,profile.FullName, profile.Gender, profile.Birthdate, profile.MaritalStatus, profile.Score, request.PhoneNumber);
+            return new GetProfileResponse(profile.UserId,profile.FullName, profile.Gender, profile.Birthdate, profile.MaritalStatus, profile.Score,profile.Status, request.PhoneNumber);
         }
     }
 }

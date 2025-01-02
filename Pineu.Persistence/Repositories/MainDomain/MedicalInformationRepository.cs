@@ -12,22 +12,31 @@ namespace Pineu.Persistence.Repositories.MainDomain {
         public async Task UpdateAsync(MedicalInformation medicalInformation, CancellationToken cancellationToken = default) =>
             await repository.UpdateAsync(medicalInformation, cancellationToken);
 
-        public async Task<int[,]> GetEpilepsyAsync(CancellationToken cancellationToken) {
-
+        public async Task<List<object>> GetEpilepsyAsync(CancellationToken cancellationToken) {
             var allEpilepsyTypeCounts = await repository.ListAsync(new GetEpilepsyTypeCountsSpecification(), cancellationToken);
 
             var counts = allEpilepsyTypeCounts
-            .GroupBy(mi => mi.EpilepsyTypeId)
-            .Select(g => new { EpilepsyTypeId = g.Key, Count = g.Count() })
-            .ToList();
-            var result = new int[counts.Count, 2];
-            for (int i = 0; i < counts.Count; i++) {
-                result[i, 0] = counts[i].EpilepsyTypeId ?? 0;
-                result[i, 1] = counts[i].Count;
-            }
+                .GroupBy(mi => mi.EpilepsyTypeId)
+                .Select(g => new {
+                    EpilepsyTypeId = g.Key,
+                    Count = g.Count()
+                })
+                .ToList();
+
+            var result = counts
+                .Select(c => new {
+                    type = c.EpilepsyTypeId switch {
+                        1 => "فوکال",
+                        2 => "ژنرالیزه",
+                        3 => "ترکیب فوکال و ژنرالیزه",
+                        4 => "ناشناخته"
+                    },
+                    count = c.Count
+                })
+            .ToList<object>();
+
 
             return result;
-
         }
     }
 }

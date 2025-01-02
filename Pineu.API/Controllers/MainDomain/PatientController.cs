@@ -15,9 +15,9 @@ namespace Pineu.API.Controllers.MainDomain {
     public class PatientController(ISender sender, ISmsPool smsPool, ISmsPanel smsPanel, UserManager<User> userManager) : ApiController(sender) {
         [HttpPost, Route("PatientRegistration")]
         public async Task<IActionResult> PatientRegistration([FromBody] PatientRegistrationRequest request, CancellationToken cancellationToken) {
-            var user = await userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == request.PhoneNumber, cancellationToken: cancellationToken);
-
-            if (user == null) {
+            var query = new GetProfileByPhonenumberQuery(request.PhoneNumber);
+            var res = await Sender.Send(query, cancellationToken);
+            if (res.Error.Message == "پروفایل یافت نشد") {
 
                 await sender.Send(new UpsertProfileCommand(request.FullName, null, null, null, null, request.PhoneNumber, null, "waiting", Guid.NewGuid()), cancellationToken);
 
@@ -32,7 +32,8 @@ namespace Pineu.API.Controllers.MainDomain {
                     Code = code,
                     request.PhoneNumber
                 });
-            } else {
+            } 
+            else {
 
                 var userId = HttpContext.User.Identity.Name;
                 var query1 = new GetLestOfRegPatientQuery(Guid.Parse(userId), "Completed");
@@ -43,7 +44,7 @@ namespace Pineu.API.Controllers.MainDomain {
                     return HandleFailure(res1);
                 if (res2.IsFailure)
                     return HandleFailure(res2);
-                if ((res1.Value == null) && (res2.Value == null)) {
+                if ((res1.Value.Count == 0) && (res2.Value.Count == 0)) {
                     var (IsSuccess, Meessage, code) = await SendSms(request.PhoneNumber, true);
                     if (!IsSuccess)
                         return NotFound(new {
@@ -86,7 +87,10 @@ namespace Pineu.API.Controllers.MainDomain {
 
             var username = HttpContext.User.Identity.Name;
 
-            var (IsSuccess, massge) = await AddDoctorIdToPatient(request.PhoneNumber, Guid.Parse(username), cancellationToken);
+            var (IsSuccess, massge) = await AddDoctorIdToPatient(
+                request.PhoneNumber,
+                Guid.Parse(username),
+                cancellationToken);
             if (!IsSuccess)
                 return BadRequest(new { Massge = massge });
 
@@ -252,11 +256,9 @@ namespace Pineu.API.Controllers.MainDomain {
             return Ok(new {
                 PatientsNotRegisteredRes,
                 PatientsRegisteredRes,
-                Epilepsy
+                Epilepsy,
             });
         }
-
-
 
 
         #region bac
@@ -299,7 +301,11 @@ namespace Pineu.API.Controllers.MainDomain {
         private async Task<(bool IsSuccess, string Message)> AddDoctorIdToPatient(string PhoneNumber, Guid DoctorId, CancellationToken cancellationToken) {
             var query = new GetProfileByPhonenumberQuery(PhoneNumber!);
             var res = await Sender.Send(query, cancellationToken);
-            await Sender.Send(new UpdateProfileCommand(DoctorId, res.Value.UserID ?? Guid.Empty), cancellationToken);
+
+            var Status = res.Value.status;
+
+            await Sender.Send(new UpdateProfileCommand(
+            DoctorId, Status, res.Value.UserID ?? Guid.Empty), cancellationToken);
 
             return (true, "Success");
         }
@@ -373,7 +379,7 @@ namespace Pineu.API.Controllers.MainDomain {
         }
 
         //GetEpilepsyAsync
-        private async Task<(string? Message, int[,])> GetEpilepsyAsync(CancellationToken cancellationToken) {
+        private async Task<(string? Message, List<object>)> GetEpilepsyAsync(CancellationToken cancellationToken) {
             var query = new GetEpilepsyQuery();
             var result = await Sender.Send(query, cancellationToken);
             if (result.IsFailure) {

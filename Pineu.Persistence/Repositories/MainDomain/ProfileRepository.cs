@@ -8,6 +8,7 @@ namespace Pineu.Persistence.Repositories.MainDomain {
 
         public async Task<Profile?> GetAsync(Guid userId, CancellationToken cancellationToken = default) =>
             await repository.FirstOrDefaultAsync(new GetProfileByUserIdSpecification(userId), cancellationToken);
+        
         public async Task<Profile?> GetWithPhoneAsync(string PhoneNumber, CancellationToken cancellationToken = default) =>
             await repository.FirstOrDefaultAsync(new GetProfileByPhoneNumberSpecification(PhoneNumber), cancellationToken);
 
