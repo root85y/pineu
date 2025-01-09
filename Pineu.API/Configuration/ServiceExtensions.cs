@@ -91,16 +91,36 @@ namespace Pineu.API.Configuration {
             });
         }
 
+        //public static void AddCORS(this IServiceCollection services) {
+        //    services.AddCors(o => o.AddPolicy("CorsPolicy", builder => {
+        //        //builder.WithOrigins("http://localhost:5000");
+        //        //"http://localhost:3000", "http://172.19.105.10:3000", "http://192.168.10.78", "http://192.168.10.78:3000", "http://192.168.10.78:3001", "http://192.168.60.83", "http://localhost:5006"
+        //        builder.AllowAnyOrigin()
+        //            .AllowAnyMethod()
+        //            .AllowAnyHeader();
+        //        //.AllowCredentials();
+        //    }));
+        //}
+
         public static void AddCORS(this IServiceCollection services) {
-            services.AddCors(o => o.AddPolicy("CorsPolicy", builder => {
-                //builder.WithOrigins("http://localhost:5000");
-                //"http://localhost:3000", "http://172.19.105.10:3000", "http://192.168.10.78", "http://192.168.10.78:3000", "http://192.168.10.78:3001", "http://192.168.60.83", "http://localhost:5006"
-                builder.AllowAnyOrigin()
+            services.AddCors(o => o.AddPolicy("CorsPolicy", builder =>
+            {
+                builder.WithOrigins(
+                        "http://localhost:3000",
+                        "http://172.19.105.10:3000",
+                        "http://192.168.10.78",
+                        "http://192.168.10.78:3000",
+                        "http://192.168.10.78:3001",
+                        "http://192.168.60.83",
+                        "http://localhost:5006",
+                        "https://pineu-app.liara.run"
+                    )
                     .AllowAnyMethod()
-                    .AllowAnyHeader();
-                //.AllowCredentials();
+                    .AllowAnyHeader()
+                    .AllowCredentials(); // Enable credentials
             }));
         }
+
 
         public static void ConfigureVersioning(this IServiceCollection services) {
             services.AddApiVersioning(option => {

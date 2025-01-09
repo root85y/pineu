@@ -7,9 +7,9 @@ services:
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
       - TZ=Asia/Tehran
-      - SmsPanelApiKey=gkd2ccoBtmqgddIVTmgnuR1OzoyNZHB9KAF0c4CBNB74Is40wqav0pIPQdRadsje
-      - SmsPanelTemplateIdSendCode=815076
-      - SmsPanelTemplateIdSendLink=595819
+      - SmsPanelApiKey=Jo9OmZNWQ3mZNIw1jptDCsBzlv5jyJX2B6US0lrc5XrnNvUJ
+      - SmsPanelTemplateIdSendCode=401571
+      - SmsPanelTemplateIdSendLink=934875
     ports:
       - "8080:8080"
       - "8081"
