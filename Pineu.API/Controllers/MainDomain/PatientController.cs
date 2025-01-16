@@ -10,6 +10,7 @@ using Pineu.Application.MainDomain.MedicalInformations.Queries;
 using Pineu.Persistence.AuthEntities;
 using Pineu.Application.MainDomain.MedicalInformations.Queries.DTOs;
 using System.Globalization;
+using Pineu.Application.MainDomain.Seizures.Queries;
 
 namespace Pineu.API.Controllers.MainDomain {
     public class PatientController(ISender sender, ISmsPool smsPool, ISmsPanel smsPanel, UserManager<User> userManager) : ApiController(sender) {
@@ -32,8 +33,7 @@ namespace Pineu.API.Controllers.MainDomain {
                     Code = code,
                     request.PhoneNumber
                 });
-            } 
-            else {
+            } else {
 
                 var userId = HttpContext.User.Identity.Name;
                 var query1 = new GetLestOfRegPatientQuery(Guid.Parse(userId), "Completed");
@@ -253,10 +253,17 @@ namespace Pineu.API.Controllers.MainDomain {
                     Error_Message = Message
                 });
 
+            var (Message2, TodaySeizures) = await GetTodaySeizuresAsync(Guid.Parse(userId), cancellationToken);
+            if (TodaySeizures == null || TodaySeizures == 0)
+                return BadRequest(new {
+                    Error_Message = Message2
+                });
+
             return Ok(new {
                 PatientsNotRegisteredRes,
                 PatientsRegisteredRes,
                 Epilepsy,
+                TodaySeizures,
             });
         }
 
@@ -387,6 +394,17 @@ namespace Pineu.API.Controllers.MainDomain {
             }
             return (null, result.Value);
         }
+
+        //GetTodaySeizuresAsync
+        private async Task<(string? Message, int)> GetTodaySeizuresAsync(Guid DoctorId, CancellationToken cancellationToken) {
+            var query = new GetTodeySeizuresQuery(DoctorId);
+            var result = await Sender.Send(query, cancellationToken);
+            if (result.IsFailure) {
+                return (result.Error.ToString(), 0);
+            }
+            return (null, result.Value);
+        }
+
 
         //GetWorkoutStatusAsync
         private async Task<(string? Message, PagedResponse<IEnumerable<GetAllWorkoutStatusesForPatientResponse>>)> GetWorkoutStatusAsync(

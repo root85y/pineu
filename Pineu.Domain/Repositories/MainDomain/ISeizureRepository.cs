@@ -7,4 +7,5 @@ public interface ISeizureRepository {
     Task<PagedResponse<IEnumerable<Seizure>>> GetAllForPatientAsync(DateTime? from, DateTime? to, Guid? userId,
     CancellationToken cancellationToken = default);
     Task<bool> HasSubmittedTooMany(CancellationToken cancellationToken = default);
-}
+    Task<int> GetTodaySeizuresAsync (Guid Doctorid , CancellationToken cancellationToken);
+}  

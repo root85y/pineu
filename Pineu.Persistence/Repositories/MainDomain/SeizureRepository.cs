@@ -1,7 +1,28 @@
-﻿using Pineu.Persistence.Specifications.MainDomain.Seizures;
+﻿using Microsoft.EntityFrameworkCore;
+using Pineu.Persistence.Context;
+using Pineu.Persistence.Specifications.MainDomain.Seizures;
+using System;
 
 namespace Pineu.Persistence.Repositories.MainDomain {
-    internal class SeizureRepository(IRepository<Seizure, Guid> repository) : ISeizureRepository {
+    //internal class SeizureRepository(IRepository<Seizure, Guid> repository) : ISeizureRepository {
+    //    private readonly ApplicationDbContext _dbContext;
+
+    //    internal SeizureRepository(ApplicationDbContext dbContext) {
+    //        _dbContext = dbContext;
+    //    }
+    internal class SeizureRepository : ISeizureRepository {
+        private readonly ApplicationDbContext _dbContext;
+        private readonly IRepository<Seizure, Guid> repository;
+
+        internal SeizureRepository(
+            ApplicationDbContext dbContext,
+            IRepository<Seizure, Guid> _repository) {
+            _dbContext = dbContext;
+            repository = _repository;
+        }
+
+
+
         private readonly int MaximumSeizurePerDay = 5;
 
         public async Task AddAsync(Seizure seizure, CancellationToken cancellationToken = default) =>
@@ -29,5 +50,13 @@ namespace Pineu.Persistence.Repositories.MainDomain {
 
         public async Task<bool> HasSubmittedTooMany(CancellationToken cancellationToken = default) =>
             await repository.CountAsync(new HasSubmittedTooManySeizuresSpecification(), cancellationToken) > MaximumSeizurePerDay;
+
+        public async Task<int> GetTodaySeizuresAsync(Guid doctorId, CancellationToken cancellationToken = default) {
+            var profiles = _dbContext.Set<Profile>().AsQueryable();
+
+            var specification = new GetTodaySeizuresForDoctorSpecification(doctorId, profiles);
+
+            return await repository.CountAsync(specification, cancellationToken);
+        }
     }
 }
