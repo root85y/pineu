@@ -11,6 +11,7 @@ using Pineu.Persistence.AuthEntities;
 using Pineu.Application.MainDomain.MedicalInformations.Queries.DTOs;
 using System.Globalization;
 using Pineu.Application.MainDomain.Seizures.Queries;
+using Pineu.Application.MainDomain.Seizures.Queries.DTOs;
 
 namespace Pineu.API.Controllers.MainDomain {
     public class PatientController(ISender sender, ISmsPool smsPool, ISmsPanel smsPanel, UserManager<User> userManager) : ApiController(sender) {
@@ -259,11 +260,17 @@ namespace Pineu.API.Controllers.MainDomain {
                     Error_Message = Message2
                 });
 
+            var (Message3, AllSeizuresCount) = await GetAllSeizuresCountAsync(Guid.Parse(userId), From, To, cancellationToken);
+            if (AllSeizuresCount == null)
+                return BadRequest(new {
+                    Error_Message = Message3
+                });
             return Ok(new {
                 PatientsNotRegisteredRes,
                 PatientsRegisteredRes,
                 Epilepsy,
                 TodaySeizures,
+                AllSeizuresCount,
             });
         }
 
@@ -401,6 +408,16 @@ namespace Pineu.API.Controllers.MainDomain {
             var result = await Sender.Send(query, cancellationToken);
             if (result.IsFailure) {
                 return (result.Error.ToString(), 0);
+            }
+            return (null, result.Value);
+        }
+
+        //GetAllSeizuresCountAsync
+        private async Task<(string? Message, PagedResponse<IEnumerable<GetAllSeizuresResponse>>)> GetAllSeizuresCountAsync(Guid DoctorId, DateTime? form, DateTime? to, CancellationToken cancellationToken) {
+            var query = new GetAllSeizuresCountQuery(DoctorId, form, to);
+            var result = await Sender.Send(query, cancellationToken);
+            if (result.IsFailure) {
+                return (result.Error.ToString(), null);
             }
             return (null, result.Value);
         }

@@ -38,6 +38,15 @@ namespace Pineu.Persistence.Repositories.MainDomain {
             return new PagedResponse<IEnumerable<Seizure>>(await repository.ListAsync(specification, cancellationToken), count);
         }
 
+        public async Task<PagedResponse<IEnumerable<Seizure>>> GetAllCountAsync(DateTime? from, DateTime? to, Guid? doctorId, CancellationToken cancellationToken = default) {
+            var profiles = _dbContext.Set<Profile>().AsQueryable();
+
+            var specification = new GetAllSeizuresCountSpecification(from, to, doctorId , profiles);
+            var count = await repository.CountAsync(specification, cancellationToken);
+
+            return new PagedResponse<IEnumerable<Seizure>>(await repository.ListAsync(specification, cancellationToken), count);
+        }
+
         public async Task<PagedResponse<IEnumerable<Seizure>>> GetAllForPatientAsync(DateTime? from, DateTime? to, Guid? userId, CancellationToken cancellationToken = default) {
             var specification = new GetAllSeizuresForPatientSpecification(from, to, userId);
             var count = await repository.CountAsync(specification, cancellationToken);
