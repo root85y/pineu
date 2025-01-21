@@ -12,6 +12,9 @@ using Pineu.Application.MainDomain.MedicalInformations.Queries.DTOs;
 using System.Globalization;
 using Pineu.Application.MainDomain.Seizures.Queries;
 using Pineu.Application.MainDomain.Seizures.Queries.DTOs;
+using Pineu.Domain.Entities.MainDomain;
+using Shared;
+using Pineu.Application.MainDomain.Profiles.Queries.DTOs;
 
 namespace Pineu.API.Controllers.MainDomain {
     public class PatientController(ISender sender, ISmsPool smsPool, ISmsPanel smsPanel, UserManager<User> userManager) : ApiController(sender) {
@@ -254,23 +257,44 @@ namespace Pineu.API.Controllers.MainDomain {
                     Error_Message = Message
                 });
 
-            var (Message2, TodaySeizures) = await GetTodaySeizuresAsync(Guid.Parse(userId), cancellationToken);
-            if (TodaySeizures == null || TodaySeizures == 0)
-                return BadRequest(new {
-                    Error_Message = Message2
+            var query = new GetAllPatientQuery(Guid.Parse(userId), "Completed");
+            var p1 = await Sender.Send(query, cancellationToken);
+
+            var ErrorMessage = new List<object>();
+            var TodaySeizures = new List<object>();
+            var SeizuresCount = new List<object>();
+
+            foreach (var PatientData in p1.Value.List) {
+                var (Message2, Today_Seizures) = await GetTodaySeizuresAsync(Guid.Parse(userId), PatientData, cancellationToken);
+                if (Today_Seizures == null || Today_Seizures == 0)
+                    ErrorMessage.Add(new {
+                        ErrorMessage = Message2
+                    });
+
+                TodaySeizures.Add(new {
+                    TodaySeizures = Today_Seizures
+                });
+            }
+
+            foreach (var PatientData in p1.Value.List) {
+                var (Message3, AllSeizuresCount) = await GetAllSeizuresCountAsync(Guid.Parse(userId), PatientData, From, To, cancellationToken);
+                if (AllSeizuresCount == null)
+                    ErrorMessage.Add(new {
+                        Error_Message = Message3
+                    });
+                SeizuresCount.Add(new {
+                    SeizuresCount = AllSeizuresCount
                 });
 
-            var (Message3, AllSeizuresCount) = await GetAllSeizuresCountAsync(Guid.Parse(userId), From, To, cancellationToken);
-            if (AllSeizuresCount == null)
-                return BadRequest(new {
-                    Error_Message = Message3
-                });
+            }
+
             return Ok(new {
                 PatientsNotRegisteredRes,
                 PatientsRegisteredRes,
                 Epilepsy,
                 TodaySeizures,
-                AllSeizuresCount,
+                ErrorMessage,
+                SeizuresCount,
             });
         }
 
@@ -403,8 +427,8 @@ namespace Pineu.API.Controllers.MainDomain {
         }
 
         //GetTodaySeizuresAsync
-        private async Task<(string? Message, int)> GetTodaySeizuresAsync(Guid DoctorId, CancellationToken cancellationToken) {
-            var query = new GetTodeySeizuresQuery(DoctorId);
+        private async Task<(string? Message, int)> GetTodaySeizuresAsync(Guid DoctorId, Profile PatientData, CancellationToken cancellationToken) {
+            var query = new GetTodeySeizuresQuery(DoctorId, PatientData);
             var result = await Sender.Send(query, cancellationToken);
             if (result.IsFailure) {
                 return (result.Error.ToString(), 0);
@@ -413,8 +437,8 @@ namespace Pineu.API.Controllers.MainDomain {
         }
 
         //GetAllSeizuresCountAsync
-        private async Task<(string? Message, PagedResponse<IEnumerable<GetAllSeizuresResponse>>)> GetAllSeizuresCountAsync(Guid DoctorId, DateTime? form, DateTime? to, CancellationToken cancellationToken) {
-            var query = new GetAllSeizuresCountQuery(DoctorId, form, to);
+        private async Task<(string? Message, PagedResponse<IEnumerable<GetAllSeizuresResponse>>)> GetAllSeizuresCountAsync(Guid DoctorId, Profile PatientData, DateTime? form, DateTime? to, CancellationToken cancellationToken) {
+            var query = new GetAllSeizuresCountQuery(DoctorId, PatientData, form, to);
             var result = await Sender.Send(query, cancellationToken);
             if (result.IsFailure) {
                 return (result.Error.ToString(), null);
