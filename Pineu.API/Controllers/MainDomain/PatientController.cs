@@ -258,13 +258,13 @@ namespace Pineu.API.Controllers.MainDomain {
                 });
 
             var query = new GetAllPatientQuery(Guid.Parse(userId), "Completed");
-            var p1 = await Sender.Send(query, cancellationToken);
+            var res = await Sender.Send(query, cancellationToken);
 
             var ErrorMessage = new List<object>();
             var TodaySeizures = new List<object>();
             var SeizuresCount = new List<object>();
 
-            foreach (var PatientData in p1.Value.List) {
+            foreach (var PatientData in res.Value.List) {
                 var (Message2, Today_Seizures) = await GetTodaySeizuresAsync(Guid.Parse(userId), PatientData, cancellationToken);
                 if (Today_Seizures == null || Today_Seizures == 0)
                     ErrorMessage.Add(new {
@@ -276,7 +276,7 @@ namespace Pineu.API.Controllers.MainDomain {
                 });
             }
 
-            foreach (var PatientData in p1.Value.List) {
+            foreach (var PatientData in res.Value.List) {
                 var (Message3, AllSeizuresCount) = await GetAllSeizuresCountAsync(Guid.Parse(userId), PatientData, From, To, cancellationToken);
                 if (AllSeizuresCount == null)
                     ErrorMessage.Add(new {
@@ -293,8 +293,8 @@ namespace Pineu.API.Controllers.MainDomain {
                 PatientsRegisteredRes,
                 Epilepsy,
                 TodaySeizures,
-                ErrorMessage,
                 SeizuresCount,
+                ErrorMessage,
             });
         }
 
