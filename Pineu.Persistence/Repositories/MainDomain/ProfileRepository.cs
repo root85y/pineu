@@ -1,5 +1,7 @@
 ﻿using Pineu.Domain.Entities.MainDomain;
+using Pineu.Persistence.Specifications.MainDomain.Doctor;
 using Pineu.Persistence.Specifications.MainDomain.Profiles;
+using Pineu.Persistence.Specifications.MainDomain.Seizures;
 
 namespace Pineu.Persistence.Repositories.MainDomain {
     public class ProfileRepository(IRepository<Profile, Guid> repository) : IProfileRepository {
@@ -20,12 +22,21 @@ namespace Pineu.Persistence.Repositories.MainDomain {
             return new PagedResponse<IEnumerable<Profile>>(profiles, totalItems);
         }
 
-
-
         public async Task<Profile?> GetFullProfileAsync(Guid PatientID, Guid doctorId, CancellationToken cancellationToken = default) =>
             await repository.FirstOrDefaultAsync(new GetFullProfileWithPatientIDSpecification(PatientID, doctorId), cancellationToken);
 
         public async Task UpdateAsync(Profile profile, CancellationToken cancellationToken = default) =>
             await repository.UpdateAsync(profile, cancellationToken);
+
+
+        public async Task<int> UserCountGetAsync(CancellationToken cancellationToken = default) {
+
+            
+            return await repository.CountAsync(new GetProfileCountSpecification(), cancellationToken);
+        }
+
+        public async Task<List<Profile>> GetAllUserDataAsync(CancellationToken cancellationToken = default) =>
+            await repository.ListAsync(new GetAllUserDataSpecification(), cancellationToken);
+
     }
 }
