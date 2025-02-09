@@ -1,9 +1,36 @@
-﻿using Pineu.Application.MainDomain.DoctorPrescriptions.Queries;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using Pineu.API.Constants;
+using Pineu.API.DTOs.Auth.Permissions;
+using Pineu.Application.MainDomain.DoctorPrescriptions.Queries;
 using Pineu.Application.MainDomain.Profiles.Queries;
+using Pineu.Persistence.AuthEntities;
+using Pineu.Persistence.Constants.Enums;
 using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace Pineu.API.Controllers.MainDomain {
     public class AdminPanelController(ISender sender) : ApiController(sender) {
+
+
+        [HttpPost, Route("Login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request) {
+            if (request.Username == "Admin")
+                if (request.Password == "root")
+                    return Ok(new {
+                        Token = await CreateToken()
+                    }) ;
+                else
+                    return BadRequest(new {
+                        Masseage = "Password wrong"
+                    });
+            else
+                return BadRequest(new {
+                    Masseage = "Username wrong"
+                });
+        }
 
         [HttpPost, Route("GetUserCount")]
         public async Task<IActionResult> GetUserCount(CancellationToken cancellationToken) {
@@ -32,8 +59,7 @@ namespace Pineu.API.Controllers.MainDomain {
 
             PersianCalendar persianCalendar = new();
 
-            var doctorsList = res.Value.List.Select(doctor => new
-            {
+            var doctorsList = res.Value.List.Select(doctor => new {
                 doctor.FirstName,
                 doctor.LastName,
                 doctor.Mobile,
@@ -68,6 +94,50 @@ namespace Pineu.API.Controllers.MainDomain {
             }).ToList();
 
             return Ok(UserList);
-        }s
+        }
+
+
+
+        private async Task<string> CreateToken() {
+
+            var signingCredential = GetSigningCredential();
+            var tokenOptions = GenerateTokenOptions(signingCredential);
+
+            return new JwtSecurityTokenHandler().WriteToken(tokenOptions);
+
+        }
+
+        private JwtSecurityToken GenerateTokenOptions(SigningCredentials signingCredential, List<Claim> claims = null) {
+            if (claims != null) {
+                var expireTime = DateTime.Now.AddDays(Convert.ToDouble(JwtConfigs.JwtExpire));
+
+                var token = new JwtSecurityToken(
+                    issuer: JwtConfigs.JwtIssuer,
+                    claims: claims,
+                    expires: expireTime,
+                    signingCredentials: signingCredential
+                );
+
+                return token;
+            } else {
+                var expireTime = DateTime.Now.AddDays(Convert.ToDouble(JwtConfigs.JwtExpire));
+
+                var token = new JwtSecurityToken(
+                    issuer: JwtConfigs.JwtIssuer,
+                    expires: expireTime,
+                    signingCredentials: signingCredential
+                );
+
+                return token;
+            }
+        }
+
+        private SigningCredentials GetSigningCredential() {
+            var key = JwtConfigs.JwtKey;
+            var secret = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+
+            return new SigningCredentials(secret, SecurityAlgorithms.HmacSha256);
+        }
+
     }
 }
