@@ -124,38 +124,38 @@ namespace Pineu.API.Controllers.MainDomain {
             });
 
 
-            var patientIds = res.Value.List.Select(patient => patient.patientid).ToList();
+            //var patientIds = res.Value.List.Select(patient => patient.patientid).ToList();
 
-            foreach (var patientId in patientIds) {
-                var (Message5, resMedicalInformations) = await GetMedicalInformationsAsync(patientId, cancellationToken);
-                if (resMedicalInformations == null)
-                    return BadRequest(new { Error_Message = Message5 });
+            //foreach (var patientId in patientIds) {
+            //    var (Message5, resMedicalInformations) = await GetMedicalInformationsAsync(patientId, cancellationToken);
+            //    if (resMedicalInformations == null)
+            //        return BadRequest(new { Error_Message = Message5 });
 
-                switch (resMedicalInformations.EpilepsyTypeId) {
-                    case 1:
-                        typeofepilepsy = "فوکال";
-                        break;
-                    case 2:
-                        typeofepilepsy = "ژنرالیزه";
+            //    switch (resMedicalInformations.EpilepsyType) {
+            //        case 1:
+            //            typeofepilepsy = "فوکال";
+            //            break;
+            //        case 2:
+            //            typeofepilepsy = "ژنرالیزه";
 
-                        break;
-                    case 3:
-                        typeofepilepsy = "ترکیب فوکال و ژنرالیزه";
-                        break;
-                    case 4:
-                        typeofepilepsy = "ناشناخته";
-                        break;
-                }
+            //            break;
+            //        case 3:
+            //            typeofepilepsy = "ترکیب فوکال و ژنرالیزه";
+            //            break;
+            //        case 4:
+            //            typeofepilepsy = "ناشناخته";
+            //            break;
+            //    }
 
-                res2.Select(pa => new {
-                    pa.patientid,
-                    pa.FullName,
-                    pa.PhoneNumber,
-                    pa.Age,
-                    EpilepsyType = typeofepilepsy,
-                    pa.Create
-                });
-            }
+            //    res2.Select(pa => new {
+            //        pa.patientid,
+            //        pa.FullName,
+            //        pa.PhoneNumber,
+            //        pa.Age,
+            //        EpilepsyType = typeofepilepsy,
+            //        pa.Create
+            //    });
+            //}
 
             return SuccessResponse(res2);
         }
@@ -358,7 +358,7 @@ namespace Pineu.API.Controllers.MainDomain {
         }
 
         //GetSleepStatusesAsync
-        private async Task<(string? Message, PagedResponse<IEnumerable<GetAllSleepStatForPatientResponse>>)> GetSleepStatusesAsync(
+        private async Task<(string? Message, PagedResponse<IEnumerable<object>>)> GetSleepStatusesAsync(
             DateTime? sleepStatusFrom,
             DateTime? SleepStatusTo,
             Guid patientId,
@@ -368,7 +368,15 @@ namespace Pineu.API.Controllers.MainDomain {
             if (result.IsFailure) {
                 return (result.Error.ToString(), null);
             }
-            return (null, result.Value);
+
+            var formattedResult = result.Value.List.Select(status => new
+            {
+                status.Date,
+                SleepStatus = status.Value.ToString() 
+            }).ToList();
+
+
+            return (null, new PagedResponse<IEnumerable<object>>(formattedResult, formattedResult.Count));
         }
 
         //GetNutritionStatusAsync
@@ -386,7 +394,7 @@ namespace Pineu.API.Controllers.MainDomain {
         }
 
         //GetMentalStatusAsync
-        private async Task<(string? Message, PagedResponse<IEnumerable<GetAllMentalStatusesForPatientResponse>>)> GetMentalStatusAsync(
+        private async Task<(string? Message, PagedResponse<IEnumerable<object>>)> GetMentalStatusAsync(
             DateTime? From,
             DateTime? To,
             Guid patientId,
@@ -396,7 +404,13 @@ namespace Pineu.API.Controllers.MainDomain {
             if (result.IsFailure) {
                 return (result.Error.ToString(), null);
             }
-            return (null, result.Value);
+
+            var formattedResult = result.Value.List.Select(status => new {
+                status.Date,
+                MentalStatuses = status.Value.ToString()
+            }).ToList();
+
+            return (null, new PagedResponse<IEnumerable<object>>(formattedResult, formattedResult.Count));
         }
 
         //GetSeizuresAsync
@@ -474,7 +488,7 @@ namespace Pineu.API.Controllers.MainDomain {
 
 
         //GetWorkoutStatusAsync
-        private async Task<(string? Message, PagedResponse<IEnumerable<GetAllWorkoutStatusesForPatientResponse>>)> GetWorkoutStatusAsync(
+        private async Task<(string? Message, PagedResponse<IEnumerable<object>>)> GetWorkoutStatusAsync(
             DateTime? From,
             DateTime? To,
             Guid patientId,
@@ -484,8 +498,15 @@ namespace Pineu.API.Controllers.MainDomain {
             if (result.IsFailure) {
                 return (result.Error.ToString(), null);
             }
-            return (null, result.Value);
+
+            var formattedResult = result.Value.List.Select(status => new {
+                status.Date,
+                WorkoutStatuses = status.Value.ToString()
+            }).ToList();
+
+            return (null, new PagedResponse<IEnumerable<object>>(formattedResult, formattedResult.Count));
         }
+
 
         public static int CalculateAge(DateTime birthDate) {
             bool isPersianDate = birthDate.Year < 1900;
