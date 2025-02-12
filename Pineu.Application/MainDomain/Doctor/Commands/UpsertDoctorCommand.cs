@@ -1,5 +1,5 @@
 ﻿namespace Pineu.Application.MainDomain.Profiles.Commands
 {
     public sealed record UpsertDoctorCommand(
-        Doctor doctor ) : ICommand;
+        Pineu.Domain.Entities.MainDomain.Doctor doctor ) : ICommand;
 }

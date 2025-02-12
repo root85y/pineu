@@ -16,6 +16,7 @@ using Pineu.Domain.Entities.MainDomain;
 using Shared;
 using Pineu.Application.MainDomain.Profiles.Queries.DTOs;
 using Google.Protobuf;
+using Pineu.Application.MainDomain.Doctor.Queries;
 
 namespace Pineu.API.Controllers.MainDomain {
     public class PatientController(ISender sender, ISmsPool smsPool, ISmsPanel smsPanel, UserManager<User> userManager) : ApiController(sender) {
@@ -239,6 +240,7 @@ namespace Pineu.API.Controllers.MainDomain {
             });
         }
 
+        
         [HttpGet, Authorize, Route("Dashboard")]
         public async Task<IActionResult> GetPatientsData([FromQuery]
             DateTime? From,
@@ -260,6 +262,18 @@ namespace Pineu.API.Controllers.MainDomain {
 
             var query = new GetAllPatientQuery(Guid.Parse(userId), "Completed");
             var res = await Sender.Send(query, cancellationToken);
+
+            var patientDtos = res.Value.List.Select(p => new {
+                p.FullName,
+                p.Gender,
+                p.Birthdate,
+                p.MaritalStatus,
+                p.Mobile,
+                p.Score,
+                DoctorName = GetNameOfDoctorWithId(p.DoctorId ?? Guid.Empty, cancellationToken),
+                p.Status,
+                p.UserId
+            });
 
             int TodaySeizures = 0;
             var SeizuresCount = new List<object>();
@@ -409,6 +423,23 @@ namespace Pineu.API.Controllers.MainDomain {
                 return (result.Error.ToString(), null);
             }
             return (null, result.Value);
+        }
+
+        //GetNameOfDoctorWithId
+        private async Task<string> GetNameOfDoctorWithId(
+            Guid DoctorId,
+            CancellationToken cancellationToken) {
+            if (DoctorId != Guid.Empty) {
+                var query = new GetNameOfDoctorWithIdQuery(DoctorId);
+                var result = await Sender.Send(query, cancellationToken);
+                if (result.IsFailure) {
+                    return (result.Error.ToString());
+                }
+                return (result.Value);
+            }
+            else
+                return ("");
+
         }
 
         //GetEpilepsyAsync

@@ -1,22 +1,16 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.IdentityModel.Tokens;
 using Pineu.API.Constants;
-using Pineu.API.DTOs.Auth;
 using Pineu.API.DTOs.Auth.Permissions;
-using Pineu.API.DTOs.MainDomain.Patient;
-using Pineu.Application.Abstractions.Pools;
 using Pineu.Application.MainDomain.DoctorPrescriptions.Queries;
 using Pineu.Application.MainDomain.MedicalInformations.Queries.DTOs;
 using Pineu.Application.MainDomain.MedicalInformations.Queries;
-using Pineu.Application.MainDomain.Profiles.Commands;
 using Pineu.Application.MainDomain.Profiles.Queries;
-using Pineu.Persistence.AuthEntities;
-using Pineu.Persistence.Constants.Enums;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Pineu.Application.MainDomain.AdminPanel.Queries;
+using Pineu.Application.MainDomain.Doctor.Queries;
 
 namespace Pineu.API.Controllers.MainDomain {
     public class AdminPanelController(ISender sender) : ApiController(sender) {
@@ -28,7 +22,7 @@ namespace Pineu.API.Controllers.MainDomain {
                 if (request.Password == "root")
                     return Ok(new {
                         Token = await CreateToken()
-                    }) ;
+                    });
                 else
                     return BadRequest(new {
                         Masseage = "Password wrong"
@@ -48,7 +42,7 @@ namespace Pineu.API.Controllers.MainDomain {
 
             return Ok(res.Value);
         }
-        
+
         [HttpPost, Authorize, Route("GetUserNotRegisteredCount")]
         public async Task<IActionResult> GetUserNotRegisteredCount(CancellationToken cancellationToken) {
 
@@ -59,7 +53,7 @@ namespace Pineu.API.Controllers.MainDomain {
 
             return Ok(res.Value.Count);
         }
-        
+
         [HttpPost, Route("GetDoctorCount")]
         public async Task<IActionResult> GetDoctorCount(CancellationToken cancellationToken) {
             var query = new GetDoctorCountQuery();
@@ -69,7 +63,7 @@ namespace Pineu.API.Controllers.MainDomain {
 
             return Ok(res.Value);
         }
-        
+
         [HttpPost, Route("GetDoctorData")]
         public async Task<IActionResult> GetDoctorData(CancellationToken cancellationToken) {
             var query = new GetDoctorDataQuery();
@@ -92,7 +86,7 @@ namespace Pineu.API.Controllers.MainDomain {
 
             return Ok(doctorsList);
         }
-        
+
         [HttpPost, Route("GetUserData")]
         public async Task<IActionResult> GetUserData(CancellationToken cancellationToken) {
             var query = new GetUserDataQuery();
@@ -107,6 +101,7 @@ namespace Pineu.API.Controllers.MainDomain {
                 user.FullName,
                 user.Mobile,
                 user.DoctorId,
+                DoctorName = GetNameOfDoctorWithId(user.DoctorId ?? Guid.Empty, cancellationToken),
                 user.Gender,
                 user.MaritalStatus,
                 user.Birthdate,
@@ -218,6 +213,19 @@ namespace Pineu.API.Controllers.MainDomain {
                 return (result.Error.ToString(), null);
             }
             return (null, result.Value);
+        }
+
+        private async Task<string> GetNameOfDoctorWithId(Guid DoctorId, CancellationToken cancellationToken) {
+            if (DoctorId != Guid.Empty) {
+                var query = new GetNameOfDoctorWithIdQuery(DoctorId);
+                var result = await Sender.Send(query, cancellationToken);
+                if (result.IsFailure) {
+                    return (result.Error.ToString());
+                }
+                return (result.Value);
+            } else
+                return ("");
+
         }
         #endregion
     }
