@@ -10,7 +10,7 @@ namespace Pineu.Persistence.Repositories.MainDomain {
 
         public async Task<Profile?> GetAsync(Guid userId, CancellationToken cancellationToken = default) =>
             await repository.FirstOrDefaultAsync(new GetProfileByUserIdSpecification(userId), cancellationToken);
-        
+
         public async Task<Profile?> GetWithPhoneAsync(string PhoneNumber, CancellationToken cancellationToken = default) =>
             await repository.FirstOrDefaultAsync(new GetProfileByPhoneNumberSpecification(PhoneNumber), cancellationToken);
 
@@ -31,12 +31,24 @@ namespace Pineu.Persistence.Repositories.MainDomain {
 
         public async Task<int> UserCountGetAsync(CancellationToken cancellationToken = default) {
 
-            
+
             return await repository.CountAsync(new GetProfileCountSpecification(), cancellationToken);
         }
 
         public async Task<List<Profile>> GetAllUserDataAsync(CancellationToken cancellationToken = default) =>
             await repository.ListAsync(new GetAllUserDataSpecification(), cancellationToken);
+
+
+        public async Task<PagedResponse<IEnumerable<Profile>>> GetAllPatientStatusAsync(string PatientStatus, CancellationToken cancellationToken = default) {
+            var specification = new GetAllProfilestatusSpecification(PatientStatus);
+            var totalItems = await repository.CountAsync(specification, cancellationToken);
+            var profiles = await repository.ListAsync(specification, cancellationToken);
+
+            return new PagedResponse<IEnumerable<Profile>>(profiles, totalItems);
+        }
+
+        public async Task<List<Profile>> GetAllUserNotRegisteredDataAsync(string Status, CancellationToken cancellationToken = default) =>
+    await repository.ListAsync(new GetAllUserNotRegisteredDataSpecification(Status), cancellationToken);
 
     }
 }

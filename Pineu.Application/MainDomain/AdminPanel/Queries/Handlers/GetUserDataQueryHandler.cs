@@ -1,6 +1,7 @@
-﻿using Pineu.Application.MainDomain.DoctorPrescriptions.Queries.DTOs;
+﻿using Pineu.Application.MainDomain.AdminPanel.Queries;
+using Pineu.Application.MainDomain.DoctorPrescriptions.Queries.DTOs;
 
-namespace Pineu.Application.MainDomain.DoctorPrescriptions.Queries.Handlers;
+namespace Pineu.Application.MainDomain.AdminPanel.Queries.Handlers;
 internal class GetUserDataQueryHandler(IProfileRepository repository)
     : IQueryHandler<GetUserDataQuery, PagedResponse<IEnumerable<Profile>>> {
     public async Task<Result<PagedResponse<IEnumerable<Profile>>>> Handle(GetUserDataQuery request, CancellationToken cancellationToken) {
