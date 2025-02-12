@@ -179,6 +179,8 @@ namespace Pineu.API.Controllers.MainDomain {
 
             var patinetId = await userManager.FindByNameAsync(PhoneNumber);
 
+            //var patinetId2 = await GetPatinetIdWithPhoneNumberAsync(PhoneNumber);
+
 
             var query = new GetAllPatientDataQuery(patinetId.Id, Guid.Parse(doctordata));
             var res = await Sender.Send(query, cancellationToken);
@@ -486,6 +488,14 @@ namespace Pineu.API.Controllers.MainDomain {
             return (null, result.Value);
         }
 
+        //private async Task<Guid> GetPatinetIdWithPhoneNumberAsync(string PhoneNumber, CancellationToken cancellationToken) {
+        //    var query = new GetPatinetIdWithPhoneNumberQuery(PhoneNumber);
+        //    var result = await Sender.Send(query, cancellationToken);
+        //    if (result.IsFailure) {
+        //        return (result.Error.ToString(), null);
+        //    }
+        //    return (result.Value);
+        //}
 
         //GetWorkoutStatusAsync
         private async Task<(string? Message, PagedResponse<IEnumerable<object>>)> GetWorkoutStatusAsync(

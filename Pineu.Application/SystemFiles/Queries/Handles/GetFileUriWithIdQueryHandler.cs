@@ -7,8 +7,8 @@ namespace Pineu.Application.SystemFiles.Queries.Handles {
             var file = await repository.GetAsync(request.Id, cancellationToken);
             if (file == null) return Result.Failure<SystemFileResponse>(DomainErrors.SystemFile.FileNotFound);
 
-            //return new SystemFileResponse(file.Id, file.Url);
-            throw new NotImplementedException();
+            return new SystemFileResponse(file.FilePath,file.Url);
+            //throw new NotImplementedException();
         }
     }
 }
