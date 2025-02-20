@@ -227,6 +227,7 @@ namespace Pineu.API.Controllers.MainDomain {
             return Ok(new {
                 UserId = res.Value.userId,
                 DoctorId = res.Value.doctorId,
+                DoctorName = GetNameOfDoctorWithId(res.Value.doctorId ?? Guid.Empty, cancellationToken),
                 FullName = res.Value.fullName,
                 Gender = res.Value.gender,
                 Birthdate = res.Value.birthdate,
