@@ -17,6 +17,7 @@ using Shared;
 using Pineu.Application.MainDomain.Profiles.Queries.DTOs;
 using Google.Protobuf;
 using Pineu.Application.MainDomain.Doctor.Queries;
+using Newtonsoft.Json;
 
 namespace Pineu.API.Controllers.MainDomain {
     public class PatientController(ISender sender, ISmsPool smsPool, ISmsPanel smsPanel, UserManager<User> userManager) : ApiController(sender) {
@@ -174,7 +175,7 @@ namespace Pineu.API.Controllers.MainDomain {
 
         [HttpGet, Authorize, Route("GetPatientsData")]
         public async Task<IActionResult> GetPatientsData(
-            [FromQuery] DateTime? From, DateTime? To, string PhoneNumber, CancellationToken cancellationToken) {
+            [FromQuery] DateTime? From, DateTime? To,string PhoneNumber, CancellationToken cancellationToken) {
             var doctordata = HttpContext.User.Identity.Name;
 
             var patinetId = await userManager.FindByNameAsync(PhoneNumber);
@@ -227,7 +228,7 @@ namespace Pineu.API.Controllers.MainDomain {
             return Ok(new {
                 UserId = res.Value.userId,
                 DoctorId = res.Value.doctorId,
-                DoctorName = GetNameOfDoctorWithId(res.Value.doctorId ?? Guid.Empty, cancellationToken),
+                DoctorName = GetNameOfDoctorWithId(res.Value.doctorId ?? Guid.Empty, cancellationToken).Result,
                 FullName = res.Value.fullName,
                 Gender = res.Value.gender,
                 Birthdate = res.Value.birthdate,
@@ -273,7 +274,7 @@ namespace Pineu.API.Controllers.MainDomain {
                 p.MaritalStatus,
                 p.Mobile,
                 p.Score,
-                DoctorName = GetNameOfDoctorWithId(p.DoctorId ?? Guid.Empty, cancellationToken),
+                DoctorName = GetNameOfDoctorWithId(p.DoctorId ?? Guid.Empty, cancellationToken).Result,
                 p.Status,
                 p.UserId
             });
@@ -283,8 +284,8 @@ namespace Pineu.API.Controllers.MainDomain {
 
             foreach (var PatientData in res.Value.List) {
                 var (Message2, Today_Seizures) = await GetTodaySeizuresAsync(Guid.Parse(userId), PatientData, cancellationToken);
-                if (Today_Seizures == null || Today_Seizures == 0)
-                    return BadRequest(new { Message2 });
+                if (Message2 != null)
+                    return BadRequest(new { masage = Message2 });
 
 
                 TodaySeizures += Today_Seizures;
@@ -292,8 +293,8 @@ namespace Pineu.API.Controllers.MainDomain {
 
             foreach (var PatientData in res.Value.List) {
                 var (Message3, AllSeizuresCount) = await GetAllSeizuresCountAsync(Guid.Parse(userId), PatientData, From, To, cancellationToken);
-                if (AllSeizuresCount == null)
-                    return BadRequest(new { Message3 });
+                if (Message3 != null)
+                    return BadRequest(new { masage = Message3 });
 
                 SeizuresCount.Add(new {
                     SeizuresCount = AllSeizuresCount
@@ -410,7 +411,7 @@ namespace Pineu.API.Controllers.MainDomain {
 
             var formattedResult = result.Value.List.Select(status => new {
                 status.Date,
-                MentalStatuses = status.Value.ToString()
+                MentalStatuses = status.Value
             }).ToList();
 
             return (null, new PagedResponse<IEnumerable<object>>(formattedResult, formattedResult.Count));
@@ -455,7 +456,7 @@ namespace Pineu.API.Controllers.MainDomain {
                 return (result.Value);
             }
             else
-                return ("");
+                return ("هنوز دکتری ثبت نشده است");
 
         }
 

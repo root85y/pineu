@@ -131,7 +131,7 @@ namespace Pineu.API.Controllers.MainDomain
                 user.Mobile,
                 user.DoctorId,
                 DoctorName = user.DoctorId == null || user.DoctorId == Guid.Empty
-        ? "ندارد"
+        ? ".هنوز دکتری ثبت نشده است."
         : await GetNameOfDoctorWithId(user.DoctorId.Value, cancellationToken),
                 user.Gender,
                 user.MaritalStatus,
@@ -275,7 +275,7 @@ namespace Pineu.API.Controllers.MainDomain
                 return (result.Value);
             }
             else
-                return ("");
+                return ("هنوز دکتری ثبت نشده است.");
 
         }
         #endregion
