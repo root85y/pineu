@@ -107,23 +107,40 @@ namespace Pineu.API.Controllers.MainDomain
                 return HandleFailure(res);
 
             PersianCalendar persianCalendar = new();
+            string doctorname = "";
+            ////var UserList = res.Value.List.Select(user => new
+            ////{
+            ////    user.Id,
+            ////    user.FullName,
+            ////    user.Mobile,
+            ////    user.DoctorId,
+            ////    //DoctorName = GetNameOfDoctorWithId(user.DoctorId ?? Guid.Empty, cancellationToken),
+            ////    //DoctorName = user.DoctorId == Guid.Empty ? "نامعلوم" : GetNameOfDoctorWithId(user.DoctorId, cancellationToken),
+            ////    DoctorName = user.DoctorId == null || user.DoctorId == Guid.Empty ? "نامعلوم" : GetNameOfDoctorWithId(user.DoctorId.Value, cancellationToken),
+            ////    user.Gender,
+            ////    user.MaritalStatus,
+            ////    user.Birthdate,
+            ////    CreatedAt = $"{persianCalendar.GetYear(user.CreatedAt):0000}/{persianCalendar.GetMonth(user.CreatedAt):00}/{persianCalendar.GetDayOfMonth(user.CreatedAt):00}",
+            ////    UpdatedAt = $"{persianCalendar.GetYear(user.UpdatedAt):0000}/{persianCalendar.GetMonth(user.UpdatedAt):00}/{persianCalendar.GetDayOfMonth(user.UpdatedAt):00}",
 
-            var UserList = res.Value.List.Select(user => new
+            ////}).ToList();
+            var UserList = await Task.WhenAll(res.Value.List.Select(async user => new
             {
                 user.Id,
                 user.FullName,
                 user.Mobile,
                 user.DoctorId,
-                //DoctorName = GetNameOfDoctorWithId(user.DoctorId ?? Guid.Empty, cancellationToken),
-                //DoctorName = user.DoctorId == Guid.Empty ? "نامعلوم" : GetNameOfDoctorWithId(user.DoctorId, cancellationToken),
-                DoctorName = user.DoctorId == Guid.Empty ? "نامعلوم" : GetNameOfDoctorWithId(user.DoctorId.Value, cancellationToken),
+                DoctorName = user.DoctorId == null || user.DoctorId == Guid.Empty
+        ? "ندارد"
+        : await GetNameOfDoctorWithId(user.DoctorId.Value, cancellationToken),
                 user.Gender,
                 user.MaritalStatus,
                 user.Birthdate,
                 CreatedAt = $"{persianCalendar.GetYear(user.CreatedAt):0000}/{persianCalendar.GetMonth(user.CreatedAt):00}/{persianCalendar.GetDayOfMonth(user.CreatedAt):00}",
                 UpdatedAt = $"{persianCalendar.GetYear(user.UpdatedAt):0000}/{persianCalendar.GetMonth(user.UpdatedAt):00}/{persianCalendar.GetDayOfMonth(user.UpdatedAt):00}",
+            }));
 
-            }).ToList();
+
 
             return Ok(UserList);
         }
@@ -247,7 +264,7 @@ namespace Pineu.API.Controllers.MainDomain
 
         private async Task<string> GetNameOfDoctorWithId(Guid DoctorId, CancellationToken cancellationToken)
         {
-            if (DoctorId != Guid.Empty)
+            if (DoctorId != Guid.Empty || DoctorId.ToString().Length < 5)
             {
                 var query = new GetNameOfDoctorWithIdQuery(DoctorId);
                 var result = await Sender.Send(query, cancellationToken);
