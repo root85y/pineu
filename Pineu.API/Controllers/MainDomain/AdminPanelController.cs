@@ -12,29 +12,36 @@ using System.Text;
 using Pineu.Application.MainDomain.AdminPanel.Queries;
 using Pineu.Application.MainDomain.Doctor.Queries;
 
-namespace Pineu.API.Controllers.MainDomain {
-    public class AdminPanelController(ISender sender) : ApiController(sender) {
+namespace Pineu.API.Controllers.MainDomain
+{
+    public class AdminPanelController(ISender sender) : ApiController(sender)
+    {
 
 
         [HttpPost, Route("Login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request) {
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
             if (request.Username == "Admin")
                 if (request.Password == "root")
-                    return Ok(new {
+                    return Ok(new
+                    {
                         Token = await CreateToken()
                     });
                 else
-                    return BadRequest(new {
+                    return BadRequest(new
+                    {
                         Masseage = "Password wrong"
                     });
             else
-                return BadRequest(new {
+                return BadRequest(new
+                {
                     Masseage = "Username wrong"
                 });
         }
 
         [HttpPost, Route("GetUserCount")]
-        public async Task<IActionResult> GetUserCount(CancellationToken cancellationToken) {
+        public async Task<IActionResult> GetUserCount(CancellationToken cancellationToken)
+        {
             var query = new GetProfileCountQuery();
             var res = await Sender.Send(query, cancellationToken);
             if (res.IsFailure)
@@ -44,7 +51,8 @@ namespace Pineu.API.Controllers.MainDomain {
         }
 
         [HttpPost, Authorize, Route("GetUserNotRegisteredCount")]
-        public async Task<IActionResult> GetUserNotRegisteredCount(CancellationToken cancellationToken) {
+        public async Task<IActionResult> GetUserNotRegisteredCount(CancellationToken cancellationToken)
+        {
 
             var query = new GetAllUserQuery("waiting");
             var res = await Sender.Send(query, cancellationToken);
@@ -55,7 +63,8 @@ namespace Pineu.API.Controllers.MainDomain {
         }
 
         [HttpPost, Route("GetDoctorCount")]
-        public async Task<IActionResult> GetDoctorCount(CancellationToken cancellationToken) {
+        public async Task<IActionResult> GetDoctorCount(CancellationToken cancellationToken)
+        {
             var query = new GetDoctorCountQuery();
             var res = await Sender.Send(query, cancellationToken);
             if (res.IsFailure)
@@ -65,7 +74,8 @@ namespace Pineu.API.Controllers.MainDomain {
         }
 
         [HttpPost, Route("GetDoctorData")]
-        public async Task<IActionResult> GetDoctorData(CancellationToken cancellationToken) {
+        public async Task<IActionResult> GetDoctorData(CancellationToken cancellationToken)
+        {
             var query = new GetDoctorDataQuery();
             var res = await Sender.Send(query, cancellationToken);
             if (res.IsFailure)
@@ -73,7 +83,8 @@ namespace Pineu.API.Controllers.MainDomain {
 
             PersianCalendar persianCalendar = new();
 
-            var doctorsList = res.Value.List.Select(doctor => new {
+            var doctorsList = res.Value.List.Select(doctor => new
+            {
                 doctor.FirstName,
                 doctor.LastName,
                 doctor.Mobile,
@@ -88,7 +99,8 @@ namespace Pineu.API.Controllers.MainDomain {
         }
 
         [HttpPost, Route("GetUserData")]
-        public async Task<IActionResult> GetUserData(CancellationToken cancellationToken) {
+        public async Task<IActionResult> GetUserData(CancellationToken cancellationToken)
+        {
             var query = new GetUserDataQuery();
             var res = await Sender.Send(query, cancellationToken);
             if (res.IsFailure)
@@ -96,12 +108,15 @@ namespace Pineu.API.Controllers.MainDomain {
 
             PersianCalendar persianCalendar = new();
 
-            var UserList = res.Value.List.Select(user => new {
+            var UserList = res.Value.List.Select(user => new
+            {
                 user.Id,
                 user.FullName,
                 user.Mobile,
                 user.DoctorId,
-                DoctorName = GetNameOfDoctorWithId(user.DoctorId ?? Guid.Empty, cancellationToken),
+                //DoctorName = GetNameOfDoctorWithId(user.DoctorId ?? Guid.Empty, cancellationToken),
+                //DoctorName = user.DoctorId == Guid.Empty ? "نامعلوم" : GetNameOfDoctorWithId(user.DoctorId, cancellationToken),
+                DoctorName = user.DoctorId == Guid.Empty ? "نامعلوم" : GetNameOfDoctorWithId(user.DoctorId.Value, cancellationToken),
                 user.Gender,
                 user.MaritalStatus,
                 user.Birthdate,
@@ -114,7 +129,8 @@ namespace Pineu.API.Controllers.MainDomain {
         }
 
         [HttpPost, Route("GetUserNotRegisteredData")]
-        public async Task<IActionResult> GetUserNotRegisteredData(CancellationToken cancellationToken) {
+        public async Task<IActionResult> GetUserNotRegisteredData(CancellationToken cancellationToken)
+        {
             var query = new GetUserNotRegisteredDataQuery("waiting");
             var res = await Sender.Send(query, cancellationToken);
             if (res.IsFailure)
@@ -122,7 +138,8 @@ namespace Pineu.API.Controllers.MainDomain {
 
             PersianCalendar persianCalendar = new();
 
-            var UserList = res.Value.List.Select(user => new {
+            var UserList = res.Value.List.Select(user => new
+            {
                 user.Id,
                 user.FullName,
                 user.Mobile,
@@ -140,7 +157,8 @@ namespace Pineu.API.Controllers.MainDomain {
 
 
         #region bac
-        private async Task<string> CreateToken() {
+        private async Task<string> CreateToken()
+        {
 
             var signingCredential = GetSigningCredential();
             var tokenOptions = GenerateTokenOptions(signingCredential);
@@ -149,8 +167,10 @@ namespace Pineu.API.Controllers.MainDomain {
 
         }
 
-        private JwtSecurityToken GenerateTokenOptions(SigningCredentials signingCredential, List<Claim> claims = null) {
-            if (claims != null) {
+        private JwtSecurityToken GenerateTokenOptions(SigningCredentials signingCredential, List<Claim> claims = null)
+        {
+            if (claims != null)
+            {
                 var expireTime = DateTime.Now.AddDays(Convert.ToDouble(JwtConfigs.JwtExpire));
 
                 var token = new JwtSecurityToken(
@@ -161,7 +181,9 @@ namespace Pineu.API.Controllers.MainDomain {
                 );
 
                 return token;
-            } else {
+            }
+            else
+            {
                 var expireTime = DateTime.Now.AddDays(Convert.ToDouble(JwtConfigs.JwtExpire));
 
                 var token = new JwtSecurityToken(
@@ -174,21 +196,26 @@ namespace Pineu.API.Controllers.MainDomain {
             }
         }
 
-        private SigningCredentials GetSigningCredential() {
+        private SigningCredentials GetSigningCredential()
+        {
             var key = JwtConfigs.JwtKey;
             var secret = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
 
             return new SigningCredentials(secret, SecurityAlgorithms.HmacSha256);
         }
 
-        public static int CalculateAge(DateTime birthDate) {
+        public static int CalculateAge(DateTime birthDate)
+        {
             bool isPersianDate = birthDate.Year < 1900;
 
             int birthYear;
-            if (isPersianDate) {
+            if (isPersianDate)
+            {
                 PersianCalendar persianCalendar = new PersianCalendar();
                 birthYear = persianCalendar.ToDateTime(birthDate.Year, birthDate.Month, birthDate.Day, 0, 0, 0, 0).Year;
-            } else {
+            }
+            else
+            {
                 birthYear = birthDate.Year;
             }
 
@@ -196,7 +223,8 @@ namespace Pineu.API.Controllers.MainDomain {
             int age = currentYear - birthYear;
 
             DateTime adjustedBirthDate = new DateTime(currentYear, birthDate.Month, birthDate.Day);
-            if (DateTime.Now < adjustedBirthDate) {
+            if (DateTime.Now < adjustedBirthDate)
+            {
                 age--;
             }
 
@@ -206,24 +234,30 @@ namespace Pineu.API.Controllers.MainDomain {
         //GetMedicalInformationsAsync
         private async Task<(string? Message, GetMedicalInformationResponse)> GetMedicalInformationsAsync(
             Guid patientId,
-            CancellationToken cancellationToken) {
+            CancellationToken cancellationToken)
+        {
             var query = new GetMedicalInformationByUserIdQuery(patientId);
             var result = await Sender.Send(query, cancellationToken);
-            if (result.IsFailure) {
+            if (result.IsFailure)
+            {
                 return (result.Error.ToString(), null);
             }
             return (null, result.Value);
         }
 
-        private async Task<string> GetNameOfDoctorWithId(Guid DoctorId, CancellationToken cancellationToken) {
-            if (DoctorId != Guid.Empty) {
+        private async Task<string> GetNameOfDoctorWithId(Guid DoctorId, CancellationToken cancellationToken)
+        {
+            if (DoctorId != Guid.Empty)
+            {
                 var query = new GetNameOfDoctorWithIdQuery(DoctorId);
                 var result = await Sender.Send(query, cancellationToken);
-                if (result.IsFailure) {
+                if (result.IsFailure)
+                {
                     return (result.Error.ToString());
                 }
                 return (result.Value);
-            } else
+            }
+            else
                 return ("");
 
         }
