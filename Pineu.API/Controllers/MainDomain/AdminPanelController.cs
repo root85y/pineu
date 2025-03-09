@@ -42,7 +42,7 @@ namespace Pineu.API.Controllers.MainDomain
         [HttpPost, Route("GetUserCount")]
         public async Task<IActionResult> GetUserCount(CancellationToken cancellationToken)
         {
-            var query = new GetProfileCountQuery();
+            var query = new GetAllUserQuery("Completed");
             var res = await Sender.Send(query, cancellationToken);
             if (res.IsFailure)
                 return HandleFailure(res);
